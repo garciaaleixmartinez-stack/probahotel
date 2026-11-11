@@ -9,6 +9,20 @@ PAUta és una app web per preparar la selectivitat (PAU 2027) a Espanya, adaptad
 - Sense dependències ni frameworks: JavaScript pur, un sol fitxer final.
 - Després de cada canvi: `npm run check` (compila i passa les proves). No donis una tasca per acabada si les proves fallen.
 
+## Filtratge de tasques per model
+
+Abans de començar una tasca, classifica-la i delega-la al model que toca (`.claude/agents/`):
+
+| Tipus | Exemples | Qui la fa |
+|---|---|---|
+| **Senzilla** | buscar al codi, canviar un text o un color, executar `npm run check`, resumir un fitxer | agent `tasques-simples` (Haiku) |
+| **Mitjana** | afegir preguntes verificades, actualitzar dates oficials, escriure proves, una pantalla petita | agent `tasques-mitjanes` (Sonnet) |
+| **Complexa** | canviar la lògica del pla, redissenyar pantalles, decidir l'arquitectura, errors difícils, revisar la feina dels altres agents | el model principal de la sessió (el més potent) |
+
+- Si una petició barreja tipus, divideix-la i envia cada part on toca.
+- Si un agent diu que la tasca era més complexa del previst, fes-la tu.
+- Revisa sempre el resultat d'un agent abans de donar la tasca per acabada.
+
 ## Estructura
 
 ```
