@@ -229,7 +229,7 @@ function viewOnboarding() {
     if (pIds.length) {
       body += section('Ponderació per al teu grau') + '<div class="list">' + pIds.map((id) => {
         const w = d.ponder && d.ponder[id];
-        return '<div class="inline-field"><span style="flex:1">' + esc(SUBJECTS[id].short) + '</span><div class="seg" style="width:216px;flex:0 0 auto">' +
+        return '<div class="inline-field"><span style="flex:1">' + esc(SUBJECTS[id].short) + '</span><div class="seg" style="width:200px;flex:0 0 auto;grid-template-columns:1.5fr 1fr 1fr">' +
           segBtn('No ho sé', !w, 'setPonder', id + ':0') + segBtn('×0,1', w === 0.1, 'setPonder', id + ':0.1') + segBtn('×0,2', w === 0.2, 'setPonder', id + ':0.2') + '</div></div>';
       }).join('') + '</div><span class="small">Les que ponderen ×0,2 sumen més nota d’admissió: el pla els dona un 20% més de temps.</span>';
     }
