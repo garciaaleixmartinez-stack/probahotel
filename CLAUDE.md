@@ -2,6 +2,15 @@
 
 PAUta és una app web per preparar la selectivitat (PAU 2027) a Espanya, adaptada a cada comunitat autònoma. És un producte que l'Aleix vol llançar a estudiants de 2n de batxillerat i de CFGS.
 
+## La idea del producte
+
+PAUta acompanya l'estudiant des d'avui fins al dia de l'examen: li diu què ha d'estudiar cada dia, com ho ha d'estudiar i quanta nota li falta per entrar a la carrera que vol. No és un banc d'apunts: és **un professor de batxillerat a la butxaca, que planifica, motiva i mesura**.
+
+- **Per a qui:** alumnes de 2n de batxillerat; alumnes de CFGS que volen pujar nota amb la fase d'admissió; gent amb el títol que es torna a presentar per millorar la nota.
+- **Què la fa diferent:**
+  1. Adaptada a cada comunitat autònoma (17 + Ceuta i Melilla): dates oficials, 4 o 5 exàmens, llengua cooficial, universitats públiques i regles pròpies (p. ex., Matemàtiques a Andalusia).
+  2. Un pla fet com el faria un professor expert: 4 fases, pràctica intercalada, repàs espaiat a 1, 7 i 21 dies, i més temps a les matèries importants i a les que costen més.
+
 ## Com treballar en aquest projecte
 
 - Llengua de la interfície: **català**. Respon a l'usuari en l'idioma en què t'escrigui.
@@ -46,7 +55,12 @@ dist/          Resultat compilat (no l'editis a mà)
 
 - **Fases:** fonaments → consolidació (exercicis PAU) → simulacres de 90 minuts amb correcció l'endemà → repàs final de 7 dies sense temari nou.
 - **Pràctica intercalada:** mai la mateixa matèria en dos blocs seguits. Repàs espaiat a +1, +7 i +21 dies.
-- **Pesos:** fase d'accés 1,0; matèria de modalitat 1,15; matèries d'admissió 0,85. Es multipliquen per com porta l'estudiant cada matèria (×1,45 si li costa, ×1,2 si regular, ×1,0 si bé) i per ×1,15 si té menys d'un 60% d'encerts.
+- **Pesos:** fase d'accés 1,0; matèria de modalitat 1,25; matèries d'admissió 0,85 (1,0 des d'un CFGS). Es multipliquen per:
+  - com porta l'estudiant cada matèria: ×1,45 si li costa, ×1,2 si regular, ×1,0 si bé;
+  - ×1,2 si pondera 0,2 per al grau que vol (`profile.ponder[id] === 0.2`; l'estudiant ho indica a l'onboarding o a la calculadora de Nota, que van sincronitzades);
+  - ×1,2 si l'estudiant la marca com a clau amb l'estrella (`profile.stars[id]`);
+  - ×1,15 si té menys d'un 60% d'encerts.
+  Principi: més temps a les matèries importants (modalitat, les que ponderen 0,2, les clau) i a les que costen més.
 - **Identificadors de sessió:** `AAAA-MM-DD#n`. Són estables mentre no canviïn el perfil ni `planStart`. «Replanifica» fixa `planStart` a avui i parteix dels temes ja fets (`topicsDoneAtStart`).
 
 ## Estat i persistència (src/app.js)

@@ -52,12 +52,24 @@ test('Navarra: el basc només hi és si l’ha cursat', () => {
   assert.equal(studentSubjects(base({ region: 'nav' })).filter((s) => s.role === 'access').length, 4);
   assert.equal(studentSubjects(base({ region: 'nav', coLangOn: true })).filter((s) => s.role === 'access').length, 5);
 });
-test('Pesos: accés 1,0 · modalitat 1,15 · admissió 0,85, per valoració', () => {
+test('Pesos: accés 1,0 · modalitat 1,25 · admissió 0,85, per valoració', () => {
   const subs = studentSubjects(base({ ratings: { cas: 1, mat: 3, fis: 2 } }));
   const w = (id) => subs.find((s) => s.id === id).weight;
   assert.ok(Math.abs(w('cas') - 1.45) < 1e-9);
-  assert.ok(Math.abs(w('mat') - 1.15) < 1e-9);
+  assert.ok(Math.abs(w('mat') - 1.25) < 1e-9);
   assert.ok(Math.abs(w('fis') - 0.85 * 1.2) < 1e-9);
+});
+test('Importància: pondera 0,2 (×1,2) i estrella (×1,2) se sumen a la dificultat', () => {
+  const subs = studentSubjects(base({ ratings: { fis: 1, qui: 3 }, ponder: { fis: 0.2, qui: 0.1 }, stars: { fis: true } }));
+  const w = (id) => subs.find((s) => s.id === id).weight;
+  assert.ok(Math.abs(w('fis') - 0.85 * 1.45 * 1.2 * 1.2) < 1e-9);
+  assert.ok(Math.abs(w('qui') - 0.85) < 1e-9, 'ponderar 0,1 no suma');
+});
+test('Una matèria important i difícil rep més temps al pla', () => {
+  const imp = generatePlan(base({ ratings: { fis: 1 }, ponder: { fis: 0.2 }, stars: { fis: true } }));
+  const nor = generatePlan(base());
+  const count = (p) => p.days.flatMap((d) => d.items).filter((i) => i.subj === 'fis' && (i.type === 'teoria' || i.type === 'exercicis')).length;
+  assert.ok(count(imp) > count(nor), count(imp) + ' vs ' + count(nor));
 });
 test('Menys d’un 60% d’encerts multiplica el pes per 1,15', () => {
   const subs = studentSubjects(base({ ratings: { cas: 3 } }), { cas: { total: 10, correct: 5 } });

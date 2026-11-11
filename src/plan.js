@@ -37,16 +37,21 @@ function studentSubjects(profile, quizStats) {
     if (!id || !SUBJECTS[id] || list.some((x) => x.id === id)) return;
     const rating = (profile.ratings && profile.ratings[id]) || 2;
     let w = base * ({ 1: 1.45, 2: 1.2, 3: 1.0 }[rating] || 1.2);
+    // Importància: pondera 0,2 per al grau que vol, o l'estudiant la marca com a clau
+    const ponder2 = !!(profile.ponder && profile.ponder[id] === 0.2);
+    const star = !!(profile.stars && profile.stars[id]);
+    if (ponder2) w *= 1.2;
+    if (star) w *= 1.2;
     const st = quizStats && quizStats[id];
     if (st && st.total >= 8 && st.correct / st.total < 0.6) w *= 1.15;
-    list.push({ id, role, weight: w, rating });
+    list.push({ id, role, weight: w, rating, ponder2, star });
   };
   if (profile.level !== 'cfgs') {
     add('cas', 'access', 1.0);
     if (r && r.coLang && (!r.coOptional || profile.coLangOn)) add(CO_LANG_SUBJECT[r.coLang], 'access', 1.0);
     add(profile.foreign || 'eng', 'access', 1.0);
     add(profile.histOrFil || 'his', 'access', 1.0);
-    add(profile.modSubject, 'access', 1.15);
+    add(profile.modSubject, 'access', 1.25);
   }
   (profile.admission || []).forEach((id) => add(id, 'admission', profile.level === 'cfgs' ? 1.0 : 0.85));
   return list;

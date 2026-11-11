@@ -149,3 +149,5 @@ input[type=number]{-moz-appearance:textfield}
 .fhint{margin-top:auto;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600;color:#AEAEB2}
 .fhint.on{color:var(--accent)}
 .fhint.on svg{transform:rotate(90deg)}
+.star-btn{width:44px;height:44px;margin:-10px -10px -10px 0;border:none;background:transparent;color:#C7C7CC;display:flex;align-items:center;justify-content:center;padding:0;flex:0 0 auto}
+.star-btn[aria-pressed=true]{color:#B25000}

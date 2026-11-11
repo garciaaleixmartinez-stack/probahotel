@@ -125,7 +125,14 @@ function toast(msg) {
 const ONB_STEPS = 8; // 0..7
 function newDraft() {
   const p = S.profile ? JSON.parse(JSON.stringify(S.profile)) : null;
-  return p || { name: '', region: null, level: 'batx', modality: null, modSubject: null, histOrFil: 'his', foreign: 'eng', coLangOn: true, admission: [], ratings: {}, degree: '', cut: '', uni: null, minutes: 60, days: [true, true, true, true, true, false, false] };
+  return p || { name: '', region: null, level: 'batx', modality: null, modSubject: null, histOrFil: 'his', foreign: 'eng', coLangOn: true, admission: [], ratings: {}, stars: {}, ponder: {}, degree: '', cut: '', uni: null, minutes: 60, days: [true, true, true, true, true, false, false] };
+}
+// Matèries que poden ponderar a la fase d'admissió (modalitat + admissió)
+function draftPonderable(d) {
+  const ids = [];
+  if (d.level !== 'cfgs' && d.modSubject) ids.push(d.modSubject);
+  (d.admission || []).forEach((x) => { if (!ids.includes(x)) ids.push(x); });
+  return ids;
 }
 function draftSubjects(d) {
   return studentSubjects(Object.assign({}, d, { ratings: {} }), {}).map((s) => s.id);
@@ -204,19 +211,29 @@ function viewOnboarding() {
     body = html;
   } else if (st === 5) {
     const ids = draftSubjects(d);
-    body = head('Com portes cada matèria?', 'Sigues sincer: el pla dedicarà més temps a les que et costen més.') +
+    body = head('Com portes cada matèria?', 'Sigues sincer: el pla dedicarà més temps a les que et costen més. Marca amb l’estrella les que són clau per a la teva carrera.') +
       '<div class="list">' + ids.map((id) => {
-        const v = d.ratings[id] || 2;
-        return '<div class="li" style="flex-direction:column;align-items:stretch;gap:10px"><span class="row"><span class="dot" style="background:' + SUBJECTS[id].color + '"></span><span class="t">' + esc(SUBJECTS[id].name) + '</span></span><div class="seg">' +
+        const v = d.ratings[id] || 2; const st = !!(d.stars && d.stars[id]);
+        return '<div class="li" style="flex-direction:column;align-items:stretch;gap:10px"><span class="row"><span class="dot" style="background:' + SUBJECTS[id].color + '"></span><span class="t" style="flex:1">' + esc(SUBJECTS[id].name) + '</span>' +
+          '<button class="star-btn" aria-pressed="' + st + '" aria-label="' + (st ? 'Treu de les clau: ' : 'Marca com a clau: ') + esc(SUBJECTS[id].short) + '" data-act="toggleStar" data-arg="' + id + '"><svg width="22" height="22" viewBox="0 0 24 24" fill="' + (st ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg></button></span><div class="seg">' +
           segBtn('Em costa', v === 1, 'rate', id + ':1') + segBtn('Regular', v === 2, 'rate', id + ':2') + segBtn('Bé', v === 3, 'rate', id + ':3') + '</div></div>';
-      }).join('') + '</div>';
+      }).join('') + '</div>' +
+      '<span class="small">Les que et costen reben fins a un 45% més de temps, i les clau, un 20% més.</span>';
   } else if (st === 6) {
     const r = getRegion(d.region);
     body = head('On vols entrar?', 'Et direm quanta nota et falta. Ho pots deixar en blanc.') +
       '<div class="list"><div class="field"><label for="f-deg">Grau universitari</label><input id="f-deg" data-bind="draft.degree" value="' + esc(d.degree) + '" placeholder="p. ex. Publicitat i Relacions Públiques"></div>' +
       '<div class="field"><label for="f-cut">Nota de tall de l’últim any (5–14)</label><input id="f-cut" type="number" inputmode="decimal" step="0.001" min="5" max="14" data-bind="draft.cut" value="' + esc(d.cut) + '" placeholder="p. ex. 10,5"></div></div>' +
-      section('Universitats públiques · ' + esc(r ? r.name : '')) + '<div class="chips">' + (r ? r.unis : []).concat(['Una altra']).map((u) => chip(u, d.uni === u, 'setUni', u)).join('') + '</div>' +
-      '<span class="small">Les notes de tall i les ponderacions oficials les publica ' + esc(r ? r.organ : 'la teva comunitat') + '.</span>';
+      section('Universitats públiques · ' + esc(r ? r.name : '')) + '<div class="chips">' + (r ? r.unis : []).concat(['Una altra']).map((u) => chip(u, d.uni === u, 'setUni', u)).join('') + '</div>';
+    const pIds = draftPonderable(d);
+    if (pIds.length) {
+      body += section('Ponderació per al teu grau') + '<div class="list">' + pIds.map((id) => {
+        const w = d.ponder && d.ponder[id];
+        return '<div class="inline-field"><span style="flex:1">' + esc(SUBJECTS[id].short) + '</span><div class="seg" style="width:216px;flex:0 0 auto">' +
+          segBtn('No ho sé', !w, 'setPonder', id + ':0') + segBtn('×0,1', w === 0.1, 'setPonder', id + ':0.1') + segBtn('×0,2', w === 0.2, 'setPonder', id + ':0.2') + '</div></div>';
+      }).join('') + '</div><span class="small">Les que ponderen ×0,2 sumen més nota d’admissió: el pla els dona un 20% més de temps.</span>';
+    }
+    body += '<span class="small">Les notes de tall i les ponderacions oficials les publica ' + esc(r ? r.organ : 'la teva comunitat') + '.</span>';
   } else if (st === 7) {
     const ex = examDateFor(d);
     const left = diffDays(today(), ex.date);
@@ -737,6 +754,8 @@ const ACT = {
   toggleCo() { U.draft.coLangOn = !U.draft.coLangOn; render(); },
   toggleAdm(a) { const d = U.draft; d.admission = d.admission.includes(a) ? d.admission.filter((x) => x !== a) : d.admission.concat(a).slice(0, 3); render(); },
   rate(a) { const [id, v] = a.split(':'); U.draft.ratings[id] = +v; render(); },
+  toggleStar(a) { const d = U.draft; d.stars = d.stars || {}; if (d.stars[a]) delete d.stars[a]; else d.stars[a] = true; render(); },
+  setPonder(a) { const [id, w] = a.split(':'); const d = U.draft; d.ponder = d.ponder || {}; if (+w) d.ponder[id] = +w; else delete d.ponder[id]; render(); },
   setUni(a) { U.draft.uni = U.draft.uni === a ? null : a; render(); },
   setMinutes(a) { U.draft.minutes = +a; render(); },
   toggleDay(a) { U.draft.days[+a] = !U.draft.days[+a]; render(); },
@@ -744,6 +763,10 @@ const ACT = {
     if (!onbCanContinue()) return;
     const d = U.draft; d.name = d.name.trim();
     const keep = draftSubjects(d); Object.keys(d.ratings).forEach((k) => { if (!keep.includes(k)) delete d.ratings[k]; });
+    d.stars = d.stars || {}; Object.keys(d.stars).forEach((k) => { if (!keep.includes(k)) delete d.stars[k]; });
+    const pk = draftPonderable(d); d.ponder = d.ponder || {}; Object.keys(d.ponder).forEach((k) => { if (!pk.includes(k)) delete d.ponder[k]; });
+    // La calculadora de Nota parteix de la mateixa ponderació
+    Object.keys(d.ponder).forEach((k) => { S.grades.adm[k] = Object.assign({}, S.grades.adm[k], { w: d.ponder[k] }); });
     d.planStart = today(); d.topicsDoneAtStart = Object.assign({}, S.topicsDone);
     S.profile = d; U.draft = null; U.view = 'home'; U.step = 0; planCache = null; save(); render();
   },
@@ -809,7 +832,12 @@ const ACT = {
   flip() { U.flash.flipped = !U.flash.flipped; render(); },
   flashGrade(a) { const f = U.flash; const c = f.items[f.i]; const ok = a === '1'; withActivity(() => { grade(c.key, ok); S.act[today()] = (S.act[today()] || 0) + 1; save(); }); if (ok) f.known++; f.i++; f.flipped = false; render(); },
   closeOverlay() { U.quiz = null; U.flash = null; render(); },
-  setW(a) { const [id, w] = a.split(':'); S.grades.adm[id] = Object.assign({}, S.grades.adm[id], { w: +w }); save(); render(); },
+  setW(a) {
+    const [id, w] = a.split(':'); S.grades.adm[id] = Object.assign({}, S.grades.adm[id], { w: +w });
+    // Mantén el pla al dia: les que ponderen 0,2 hi reben més temps
+    S.profile.ponder = Object.assign({}, S.profile.ponder, { [id]: +w });
+    save(); render();
+  },
   async copyData() { try { await navigator.clipboard.writeText(JSON.stringify(S)); toast('Còpia de seguretat copiada'); } catch (e) { toast('No s’ha pogut copiar en aquest navegador'); } },
   askReset() { U.sheet = { type: 'confirm' }; render(); },
   doReset() { stopTimer(); S = freshState(); save(); U.view = 'onb'; U.step = 0; U.draft = null; U.sheet = null; planCache = null; render(); }
