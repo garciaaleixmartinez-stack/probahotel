@@ -1,0 +1,13 @@
+{
+  "name": "pau-ta",
+  "version": "1.0.0",
+  "description": "PAUta: app per preparar la selectivitat (PAU 2027), adaptada a cada comunitat autònoma.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node tests/plan.test.mjs",
+    "check": "node build.mjs && node tests/plan.test.mjs",
+    "start": "node build.mjs && npx --yes serve dist -l 3000"
+  }
+}
